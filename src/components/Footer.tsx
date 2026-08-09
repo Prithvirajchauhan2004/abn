@@ -150,17 +150,6 @@ export const Footer: React.FC<FooterProps> = ({ settings, onNavigate, onOpenQuot
           <p>© {new Date().getFullYear()} ABN Thermocare System. All rights reserved. Industrial Solutions Since 2011.</p>
           <div className="flex items-center gap-4">
             <span>Greater Noida, Uttar Pradesh, India</span>
-            <span>•</span>
-            <button
-              onClick={() => {
-                onNavigate('admin');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="flex items-center gap-1 text-slate-600 hover:text-rose-600 transition font-semibold"
-            >
-              <Lock className="w-3 h-3" />
-              <span>Admin Login</span>
-            </button>
           </div>
         </div>
       </div>

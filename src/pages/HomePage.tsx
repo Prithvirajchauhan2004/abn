@@ -1,30 +1,60 @@
-import React from 'react';
-import { ShieldCheck, Phone, MessageCircle, ArrowRight, CheckCircle2, Star, Flame, Wrench, Factory, Zap, ChevronRight } from 'lucide-react';
-import { Service, SiteSettings } from '../types';
+import React, { useState } from 'react';
+import {
+  Phone,
+  PhoneCall,
+  MessageCircle,
+  ArrowRight,
+  CheckCircle2,
+  Star,
+  Flame,
+  Wrench,
+  Factory,
+  Zap,
+  ChevronRight,
+  X,
+  Info,
+  ZoomIn,
+  Eye,
+  Camera,
+} from 'lucide-react';
+import { Service, SiteSettings, GalleryItem } from '../types';
 
 interface HomePageProps {
   settings: SiteSettings;
   services: Service[];
+  gallery?: GalleryItem[];
   onNavigate: (page: string) => void;
   onOpenQuote: (serviceName?: string) => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ settings, services, onNavigate, onOpenQuote }) => {
+export const HomePage: React.FC<HomePageProps> = ({
+  settings,
+  services,
+  gallery = [],
+  onNavigate,
+  onOpenQuote,
+}) => {
+  const [activeServiceModal, setActiveServiceModal] = useState<Service | null>(null);
+  const [activeGalleryModal, setActiveGalleryModal] = useState<GalleryItem | null>(null);
+
   const whatsappUrl = `https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
     'Hello ABN Thermocare System, I am interested in your industrial thermal & insulation services.'
   )}`;
 
   // Top active featured services from database
   const featuredServices = services.filter((s) => s.isActive).slice(0, 6);
+  const featuredGallery = gallery.slice(0, 6);
 
   return (
     <div className="space-y-16 pb-16 text-slate-800">
       {/* HERO SECTION */}
       <section className="relative bg-gradient-to-b from-rose-50/70 via-white to-slate-50 text-slate-900 overflow-hidden py-16 sm:py-24 border-b border-rose-100/80">
-        {/* Subtle Industrial Background Overlay */}
-        <div 
-          className="absolute inset-0 z-0 opacity-5 bg-cover bg-center mix-blend-multiply" 
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=1920')" }}
+        <div
+          className="absolute inset-0 z-0 opacity-5 bg-cover bg-center mix-blend-multiply"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=1920')",
+          }}
         />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -37,7 +67,11 @@ export const HomePage: React.FC<HomePageProps> = ({ settings, services, onNaviga
               </div>
 
               <h1 className="text-3xl sm:text-5xl font-bold font-serif leading-tight text-slate-900 tracking-tight">
-                Engineering Excellence in <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-rose-700 to-red-600">Thermal & Insulation</span> Solutions
+                Engineering Excellence in{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-rose-700 to-red-600">
+                  Thermal & Insulation
+                </span>{' '}
+                Solutions
               </h1>
 
               <p className="text-sm sm:text-base text-slate-600 max-w-xl leading-relaxed">
@@ -104,9 +138,13 @@ export const HomePage: React.FC<HomePageProps> = ({ settings, services, onNaviga
                   <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md p-4 rounded-xl border border-rose-100 shadow-lg space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-rose-700">Featured Showcase</span>
-                      <span className="text-[10px] bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-md">Thermal Lagging</span>
+                      <span className="text-[10px] bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-md">
+                        Thermal Lagging
+                      </span>
                     </div>
-                    <p className="text-xs text-slate-800 font-semibold">Zero-Heat-Loss Steam Pipe Insulation System</p>
+                    <p className="text-xs text-slate-800 font-semibold">
+                      Zero-Heat-Loss Steam Pipe Insulation System
+                    </p>
                   </div>
                 </div>
               </div>
@@ -137,7 +175,7 @@ export const HomePage: React.FC<HomePageProps> = ({ settings, services, onNaviga
         </div>
       </section>
 
-      {/* FEATURED SERVICES CATALOG */}
+      {/* FEATURED SERVICES CATALOG - CLICKABLE TILES */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
@@ -147,6 +185,9 @@ export const HomePage: React.FC<HomePageProps> = ({ settings, services, onNaviga
             <h2 className="text-2xl font-bold font-serif text-slate-900 mt-1">
               Industrial Services & Products
             </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Click any service tile to read the full description and request a callback.
+            </p>
           </div>
           <button
             onClick={() => onNavigate('services')}
@@ -161,7 +202,8 @@ export const HomePage: React.FC<HomePageProps> = ({ settings, services, onNaviga
           {featuredServices.map((srv) => (
             <div
               key={srv.id}
-              className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+              onClick={() => setActiveServiceModal(srv)}
+              className="cursor-pointer bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between group hover:border-rose-300"
             >
               <div>
                 <div className="h-48 relative overflow-hidden bg-slate-900">
@@ -171,6 +213,13 @@ export const HomePage: React.FC<HomePageProps> = ({ settings, services, onNaviga
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-95"
                     referrerPolicy="no-referrer"
                   />
+                  <div className="absolute inset-0 bg-slate-950/20 group-hover:bg-slate-950/40 transition-colors flex items-center justify-center">
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 backdrop-blur-md text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5">
+                      <Eye className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Read Full Description</span>
+                    </span>
+                  </div>
+
                   <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-rose-400 text-[10px] font-bold px-2.5 py-1 rounded-md border border-rose-500/20">
                     {srv.category}
                   </div>
@@ -191,17 +240,94 @@ export const HomePage: React.FC<HomePageProps> = ({ settings, services, onNaviga
                   {srv.price}
                 </span>
                 <button
-                  onClick={() => onOpenQuote(srv.name)}
-                  className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenQuote(srv.name);
+                  }}
+                  className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-xl transition flex items-center gap-1 shadow-sm"
                 >
-                  <span>Request Quote</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>Get Quote</span>
+                  <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
             </div>
           ))}
         </div>
       </section>
+
+      {/* FEATURED PROJECT GALLERY - CLICKABLE TILES */}
+      {featuredGallery.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 pb-4">
+            <div>
+              <span className="text-xs font-bold text-rose-600 uppercase tracking-widest flex items-center gap-1.5">
+                <Camera className="w-3.5 h-3.5" />
+                <span>On-Site Installations</span>
+              </span>
+              <h2 className="text-2xl font-bold font-serif text-slate-900 mt-1">
+                Project Execution Gallery
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Click any gallery tile to view complete project photos and details.
+              </p>
+            </div>
+            <button
+              onClick={() => onNavigate('gallery')}
+              className="inline-flex items-center gap-1.5 font-semibold text-xs text-rose-700 hover:text-rose-800 transition"
+            >
+              <span>View All Projects ({gallery.length})</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredGallery.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => setActiveGalleryModal(item)}
+                className="group cursor-pointer bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:border-rose-300 transition-all duration-300 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="aspect-video relative overflow-hidden bg-slate-900">
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-slate-950/30 group-hover:bg-slate-950/50 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <div className="bg-white/95 backdrop-blur-md text-slate-900 text-xs font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow">
+                        <ZoomIn className="w-4 h-4 text-rose-600" />
+                        <span>View Project Details</span>
+                      </div>
+                    </div>
+
+                    <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-sm text-rose-400 text-[10px] font-semibold px-2.5 py-1 rounded-md border border-rose-500/20">
+                      {item.category}
+                    </div>
+                  </div>
+
+                  <div className="p-5 space-y-2">
+                    <h3 className="text-base font-bold font-serif text-slate-900 group-hover:text-rose-700 transition">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 pt-0 border-t border-slate-100 mt-2 flex items-center justify-between">
+                  <span className="text-[11px] font-medium text-slate-500">Greater Noida / NCR</span>
+                  <span className="text-xs font-semibold text-rose-700 group-hover:text-rose-800 transition">
+                    View Project &rarr;
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* WHY CHOOSE US - CLEAN LIGHT CARDS */}
       <section className="bg-gradient-to-br from-rose-50/70 via-white to-slate-50 border border-rose-100 py-16 rounded-3xl max-w-7xl mx-auto px-6 sm:px-12 shadow-sm">
@@ -335,8 +461,230 @@ export const HomePage: React.FC<HomePageProps> = ({ settings, services, onNaviga
           </div>
         </div>
       </section>
+
+      {/* SERVICE DETAILS FULL DESCRIPTION MODAL */}
+      {activeServiceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 my-8">
+            <div className="relative aspect-video max-h-72 bg-slate-900">
+              <img
+                src={activeServiceModal.imageUrl}
+                alt={activeServiceModal.name}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+
+              <button
+                onClick={() => setActiveServiceModal(null)}
+                className="absolute top-4 right-4 p-2 bg-slate-900/80 hover:bg-slate-900 text-white rounded-full transition shadow"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="absolute bottom-4 left-6 right-6 text-white space-y-1">
+                <span className="bg-rose-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">
+                  {activeServiceModal.category}
+                </span>
+                <h2 className="text-2xl font-bold font-serif">{activeServiceModal.name}</h2>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+              {/* Short Summary */}
+              <div className="bg-rose-50/60 border border-rose-100 p-3.5 rounded-xl text-xs text-rose-950 font-medium">
+                {activeServiceModal.shortDescription}
+              </div>
+
+              {/* Full Description with whitespace-pre-wrap to preserve admin formatting */}
+              <div>
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  Full Service Description
+                </h4>
+                <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-xl text-sm text-slate-800 leading-relaxed whitespace-pre-wrap font-sans">
+                  {activeServiceModal.fullDescription}
+                </div>
+              </div>
+
+              {/* Use Cases */}
+              {activeServiceModal.useCases && activeServiceModal.useCases.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    Key Industrial Applications
+                  </h4>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
+                    {activeServiceModal.useCases.map((uc, i) => (
+                      <li
+                        key={i}
+                        className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{uc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Price */}
+              <div className="bg-slate-100 p-3.5 rounded-xl flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-600">Pricing & Commercials</span>
+                <span className="text-sm font-bold text-slate-900">{activeServiceModal.price}</span>
+              </div>
+            </div>
+
+            {/* Modal Footer with "Get a Callback" and "Call Now" */}
+            <div className="p-5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* GET A CALLBACK BUTTON */}
+                <button
+                  onClick={() => {
+                    const name = activeServiceModal.name;
+                    setActiveServiceModal(null);
+                    onOpenQuote(`Callback Request: ${name}`);
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-sm"
+                >
+                  <PhoneCall className="w-3.5 h-3.5" />
+                  <span>Get a Callback</span>
+                </button>
+
+                {/* CALL NOW BUTTON */}
+                <a
+                  href={`tel:${settings.phone.replace(/[^0-9+]/g, '')}`}
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-sm"
+                >
+                  <Phone className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Call Now ({settings.phone})</span>
+                </a>
+
+                {/* WHATSAPP CHAT */}
+                <a
+                  href={`https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                    `Hello ABN Thermocare, I am reading about "${activeServiceModal.name}". Please call me back.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 font-semibold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>WhatsApp</span>
+                </a>
+              </div>
+
+              {/* REQUEST FAST QUOTE */}
+              <button
+                onClick={() => {
+                  const name = activeServiceModal.name;
+                  setActiveServiceModal(null);
+                  onOpenQuote(name);
+                }}
+                className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition shadow flex items-center gap-1.5"
+              >
+                <span>Request Fast Quote</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GALLERY ITEM FULL DESCRIPTION MODAL */}
+      {activeGalleryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+          <div className="relative w-full max-w-3xl bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-800 my-8 text-white">
+            <button
+              onClick={() => setActiveGalleryModal(null)}
+              className="absolute top-4 right-4 z-10 p-2 bg-slate-950/80 hover:bg-slate-950 text-white rounded-full transition shadow"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="aspect-video max-h-80 relative bg-slate-950">
+              <img
+                src={activeGalleryModal.imageUrl}
+                alt={activeGalleryModal.title}
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[50vh] overflow-y-auto bg-slate-900">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 rounded">
+                  {activeGalleryModal.category}
+                </span>
+                <span className="text-xs text-slate-400">Site: Greater Noida / NCR Region</span>
+              </div>
+
+              <h2 className="text-xl font-bold font-serif text-white">{activeGalleryModal.title}</h2>
+
+              {/* Full Description with whitespace-pre-wrap to preserve admin formatting */}
+              <div>
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  Project Description & Specifications
+                </h4>
+                <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre-wrap font-sans">
+                  {activeGalleryModal.description}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer with "Get a Callback" and "Call Now" */}
+            <div className="p-5 bg-slate-950 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* GET A CALLBACK BUTTON */}
+                <button
+                  onClick={() => {
+                    const title = activeGalleryModal.title;
+                    setActiveGalleryModal(null);
+                    onOpenQuote(`Callback Request for Project: ${title}`);
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-sm"
+                >
+                  <PhoneCall className="w-3.5 h-3.5" />
+                  <span>Get a Callback</span>
+                </button>
+
+                {/* CALL NOW BUTTON */}
+                <a
+                  href={`tel:${settings.phone.replace(/[^0-9+]/g, '')}`}
+                  className="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 border border-slate-700"
+                >
+                  <Phone className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Call Now ({settings.phone})</span>
+                </a>
+
+                {/* WHATSAPP CHAT */}
+                <a
+                  href={`https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                    `Hello ABN Thermocare, I am inquiring about project: "${activeGalleryModal.title}". Please call me back.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 font-semibold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5 border border-emerald-800/50"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>WhatsApp</span>
+                </a>
+              </div>
+
+              {/* REQUEST QUOTE FOR SIMILAR WORK */}
+              <button
+                onClick={() => {
+                  const title = activeGalleryModal.title;
+                  setActiveGalleryModal(null);
+                  onOpenQuote(title);
+                }}
+                className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition shadow flex items-center gap-1.5"
+              >
+                <span>Request Similar Project Quote</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
-

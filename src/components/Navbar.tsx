@@ -65,14 +65,6 @@ export const Navbar: React.FC<NavbarProps> = ({ settings, currentPage, onNavigat
               <MessageCircle className="w-3.5 h-3.5" />
               <span>WhatsApp Chat</span>
             </a>
-            <button
-              onClick={() => handleNav('admin')}
-              className="flex items-center gap-1 text-slate-500 hover:text-rose-600 transition ml-2 text-xs font-semibold"
-              title="Admin Portal Login"
-            >
-              <Lock className="w-3 h-3" />
-              <span className="hidden sm:inline">Admin</span>
-            </button>
           </div>
         </div>
       </div>

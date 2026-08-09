@@ -13,7 +13,18 @@ import { Service, SiteSettings, GalleryItem } from './types';
 import { api } from './lib/api';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<string>('home');
+  const getInitialPage = () => {
+    const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
+    const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '');
+    if (path === '/admin' || hash === 'admin') return 'admin';
+    if (path === '/services' || hash === 'services') return 'services';
+    if (path === '/gallery' || hash === 'gallery') return 'gallery';
+    if (path === '/about' || hash === 'about') return 'about';
+    if (path === '/contact' || hash === 'contact') return 'contact';
+    return 'home';
+  };
+
+  const [currentPage, setCurrentPage] = useState<string>(getInitialPage);
   const [services, setServices] = useState<Service[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [settings, setSettings] = useState<SiteSettings>({
@@ -30,6 +41,28 @@ export default function App() {
     businessType: 'Proprietorship, Manufacturer & Service Provider',
     gstin: '09AABCU9601M1ZD',
   });
+
+  // Sync navigation with URL hash / pushState
+  const handleNavigate = (page: string) => {
+    setCurrentPage(page);
+    if (page === 'admin') {
+      window.history.pushState(null, '', '/admin');
+    } else if (page === 'home') {
+      window.history.pushState(null, '', '/');
+    } else {
+      window.history.pushState(null, '', `/${page}`);
+    }
+  };
+
+  // Listen to popstate or hash changes
+  useEffect(() => {
+    const handlePopState = () => {
+      const page = getInitialPage();
+      setCurrentPage(page);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Global Quote Modal State
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
@@ -70,7 +103,7 @@ export default function App() {
       <Navbar
         settings={settings}
         currentPage={currentPage}
-        onNavigate={setCurrentPage}
+        onNavigate={handleNavigate}
         onOpenQuote={handleOpenQuoteModal}
       />
 
@@ -80,7 +113,8 @@ export default function App() {
           <HomePage
             settings={settings}
             services={services}
-            onNavigate={setCurrentPage}
+            gallery={gallery}
+            onNavigate={handleNavigate}
             onOpenQuote={handleOpenQuoteModal}
           />
         )}
@@ -88,17 +122,17 @@ export default function App() {
         {currentPage === 'about' && (
           <AboutPage
             settings={settings}
-            onNavigate={setCurrentPage}
+            onNavigate={handleNavigate}
             onOpenQuote={() => handleOpenQuoteModal()}
           />
         )}
 
         {currentPage === 'services' && (
-          <ServicesPage services={services} onOpenQuote={handleOpenQuoteModal} />
+          <ServicesPage services={services} settings={settings} onOpenQuote={handleOpenQuoteModal} />
         )}
 
         {currentPage === 'gallery' && (
-          <GalleryPage gallery={gallery} onOpenQuote={handleOpenQuoteModal} />
+          <GalleryPage gallery={gallery} settings={settings} onOpenQuote={handleOpenQuoteModal} />
         )}
 
         {currentPage === 'contact' && (
@@ -106,7 +140,7 @@ export default function App() {
         )}
 
         {currentPage === 'admin' && (
-          <AdminPage onNavigate={setCurrentPage} onRefreshPublicData={fetchPublicData} />
+          <AdminPage onNavigate={handleNavigate} onRefreshPublicData={fetchPublicData} />
         )}
       </main>
 
@@ -114,7 +148,7 @@ export default function App() {
       {currentPage !== 'admin' && (
         <Footer
           settings={settings}
-          onNavigate={setCurrentPage}
+          onNavigate={handleNavigate}
           onOpenQuote={handleOpenQuoteModal}
         />
       )}

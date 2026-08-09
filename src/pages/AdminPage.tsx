@@ -131,7 +131,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, onRefreshPubli
   // Auth state
   const [token, setToken] = useState<string | null>(getAuthToken());
   const [user, setUser] = useState<AdminUser | null>(null);
-  const [loginForm, setLoginForm] = useState({ usernameOrEmail: 'admin@abnthermocare.com', password: 'adminpassword123' });
+  const [loginForm, setLoginForm] = useState({ usernameOrEmail: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
@@ -589,20 +589,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, onRefreshPubli
             </h1>
             <p className="text-xs text-slate-400">
               Authorized Personnel Login • Greater Noida Management System
-            </p>
-          </div>
-
-          {/* Test Credentials Helper Box */}
-          <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs space-y-1">
-            <div className="flex items-center gap-1.5 font-bold text-rose-400">
-              <KeyRound className="w-4 h-4 shrink-0" />
-              <span>Pre-configured Test Admin Credentials</span>
-            </div>
-            <p className="text-slate-300">
-              Email: <code className="bg-slate-950 px-1.5 py-0.5 rounded text-rose-300 font-mono">admin@abnthermocare.com</code>
-            </p>
-            <p className="text-slate-300">
-              Password: <code className="bg-slate-950 px-1.5 py-0.5 rounded text-rose-300 font-mono">adminpassword123</code>
             </p>
           </div>
 
