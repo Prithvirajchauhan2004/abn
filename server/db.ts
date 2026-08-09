@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
+import { Pool as NeonPool } from '@neondatabase/serverless';
 import { Service, Lead, SiteSettings, GalleryItem, AdminUser } from '../src/types.js';
 
 const { Pool } = pg;
@@ -325,23 +326,35 @@ export class Database {
     this.initPool();
   }
 
+  public getDbStatus() {
+    return {
+      isPgConnected: this.isPgConnected,
+      mode: this.isPgConnected ? 'Neon PostgreSQL' : 'Local File DB (db.json)',
+      hasDbUrl: Boolean(DEFAULT_DATABASE_URL),
+    };
+  }
+
   private async initPool() {
     const dbUrl = DEFAULT_DATABASE_URL;
     if (dbUrl) {
       try {
-        this.pool = new Pool({
-          connectionString: dbUrl,
-          ssl: { rejectUnauthorized: false },
-          max: 10,
-          idleTimeoutMillis: 30000,
-        });
+        if (dbUrl.includes('neon.tech')) {
+          this.pool = new NeonPool({ connectionString: dbUrl }) as unknown as pg.Pool;
+        } else {
+          this.pool = new Pool({
+            connectionString: dbUrl,
+            ssl: { rejectUnauthorized: false },
+            max: 10,
+            idleTimeoutMillis: 30000,
+          });
+        }
 
         // Test connection & initialize schema
         const client = await this.pool.connect();
         try {
           await this.initPgSchema(client);
           this.isPgConnected = true;
-          console.log('Successfully connected to Neon PostgreSQL database.');
+          console.log('Successfully connected to Neon PostgreSQL database via WebSocket/HTTP.');
         } finally {
           client.release();
         }

@@ -35,9 +35,17 @@ const requireAuth = (req: AuthRequest, res: Response, next: NextFunction) => {
 
 // API ROUTES
 
-// 1. Health
+// 1. Health & Database Status
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    db: db.getDbStatus(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/api/db-status', (req, res) => {
+  res.json(db.getDbStatus());
 });
 
 // 2. Auth Routes
