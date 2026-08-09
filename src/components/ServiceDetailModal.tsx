@@ -72,9 +72,9 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
     'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=1200',
   ];
 
-  const slideshowImages = Array.from(
-    new Set([service.imageUrl, ...categoryGalleryImages, ...fallbacks])
-  ).filter(Boolean);
+  const slideshowImages = service.images && service.images.length > 0
+    ? service.images
+    : Array.from(new Set([service.imageUrl, ...categoryGalleryImages, ...fallbacks])).filter(Boolean);
 
   const [currentImgIndex, setCurrentImgIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);

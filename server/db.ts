@@ -432,6 +432,7 @@ export class Database {
         short_description TEXT NOT NULL,
         full_description TEXT NOT NULL,
         image_url TEXT,
+        images JSONB DEFAULT '[]',
         price VARCHAR(100),
         is_active BOOLEAN DEFAULT TRUE,
         sort_order INT DEFAULT 99,
@@ -439,6 +440,7 @@ export class Database {
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
+      ALTER TABLE services ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]';
     `);
 
     // 4. Leads Table
@@ -655,6 +657,7 @@ export class Database {
           shortDescription: r.short_description,
           fullDescription: r.full_description,
           imageUrl: r.image_url,
+          images: Array.isArray(r.images) ? r.images : (typeof r.images === 'string' ? JSON.parse(r.images) : []),
           price: r.price,
           isActive: r.is_active,
           sortOrder: r.sort_order,
@@ -691,6 +694,7 @@ export class Database {
             shortDescription: r.short_description,
             fullDescription: r.full_description,
             imageUrl: r.image_url,
+            images: Array.isArray(r.images) ? r.images : (typeof r.images === 'string' ? JSON.parse(r.images) : []),
             price: r.price,
             isActive: r.is_active,
             sortOrder: r.sort_order,
@@ -713,6 +717,7 @@ export class Database {
   async createService(serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>): Promise<Service> {
     const newService: Service = {
       ...serviceData,
+      images: serviceData.images || [],
       id: `srv-${Date.now()}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -721,11 +726,11 @@ export class Database {
     if (this.isPgConnected && this.pool) {
       try {
         await this.pool.query(
-          `INSERT INTO services (id, name, category, short_description, full_description, image_url, price, is_active, sort_order, use_cases, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+          `INSERT INTO services (id, name, category, short_description, full_description, image_url, images, price, is_active, sort_order, use_cases, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
           [
             newService.id, newService.name, newService.category, newService.shortDescription, newService.fullDescription,
-            newService.imageUrl, newService.price, newService.isActive, newService.sortOrder,
+            newService.imageUrl, JSON.stringify(newService.images), newService.price, newService.isActive, newService.sortOrder,
             JSON.stringify(newService.useCases), newService.createdAt, newService.updatedAt
           ]
         );
@@ -750,6 +755,7 @@ export class Database {
     const updated: Service = {
       ...existing,
       ...updates,
+      images: updates.images ?? existing.images ?? [],
       updatedAt: new Date().toISOString(),
     };
 
@@ -758,12 +764,12 @@ export class Database {
         await this.pool.query(
           `UPDATE services SET
             name = $1, category = $2, short_description = $3, full_description = $4,
-            image_url = $5, price = $6, is_active = $7, sort_order = $8,
-            use_cases = $9, updated_at = $10
-           WHERE id = $11`,
+            image_url = $5, images = $6, price = $7, is_active = $8, sort_order = $9,
+            use_cases = $10, updated_at = $11
+           WHERE id = $12`,
           [
             updated.name, updated.category, updated.shortDescription, updated.fullDescription,
-            updated.imageUrl, updated.price, updated.isActive, updated.sortOrder,
+            updated.imageUrl, JSON.stringify(updated.images), updated.price, updated.isActive, updated.sortOrder,
             JSON.stringify(updated.useCases), updated.updatedAt, id
           ]
         );

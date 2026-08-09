@@ -224,6 +224,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, onRefreshPubli
     shortDescription: '',
     fullDescription: '',
     imageUrl: '',
+    slideshowImagesList: [] as string[],
     price: 'Price on Request',
     isActive: true,
     sortOrder: 1,
@@ -236,6 +237,20 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, onRefreshPubli
   const [imageUploading, setImageUploading] = useState(false);
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
   const [isDraggingImage, setIsDraggingImage] = useState(false);
+
+  const addImageToSlideshow = (url: string) => {
+    if (!url) return;
+    setServiceFormData((prev) => {
+      const currentList = prev.slideshowImagesList || [];
+      if (currentList.includes(url)) return prev;
+      const newList = [...currentList, url];
+      return {
+        ...prev,
+        imageUrl: prev.imageUrl || url,
+        slideshowImagesList: newList,
+      };
+    });
+  };
 
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -251,7 +266,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, onRefreshPubli
 
     try {
       const dataUrl = await processImageFile(file);
-      setServiceFormData((prev) => ({ ...prev, imageUrl: dataUrl }));
+      addImageToSlideshow(dataUrl);
     } catch (err: any) {
       setImageUploadError('Failed to process image file. Please try another image.');
     } finally {
@@ -284,7 +299,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, onRefreshPubli
     setImageUploading(true);
     try {
       const dataUrl = await processImageFile(file);
-      setServiceFormData((prev) => ({ ...prev, imageUrl: dataUrl }));
+      addImageToSlideshow(dataUrl);
     } catch (err) {
       setImageUploadError('Failed to process dropped image file.');
     } finally {
@@ -365,12 +380,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, onRefreshPubli
     setEditingService(null);
     setImageUploadError(null);
     setImageInputTab('upload');
+    const defaultImg = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800';
     setServiceFormData({
       name: '',
       category: 'Installation Services',
       shortDescription: '',
       fullDescription: '',
-      imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800',
+      imageUrl: defaultImg,
+      slideshowImagesList: [defaultImg],
       price: 'Price on Request',
       isActive: true,
       sortOrder: services.length + 1,
@@ -383,12 +400,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, onRefreshPubli
     setEditingService(service);
     setImageUploadError(null);
     setImageInputTab(service.imageUrl && service.imageUrl.startsWith('data:') ? 'upload' : 'url');
+    const existingList = service.images && service.images.length > 0 ? service.images : (service.imageUrl ? [service.imageUrl] : []);
     setServiceFormData({
       name: service.name,
       category: service.category,
       shortDescription: service.shortDescription,
       fullDescription: service.fullDescription,
       imageUrl: service.imageUrl,
+      slideshowImagesList: existingList,
       price: service.price,
       isActive: service.isActive,
       sortOrder: service.sortOrder,
@@ -405,12 +424,16 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, onRefreshPubli
         .map((s) => s.trim())
         .filter(Boolean);
 
+      const images = serviceFormData.slideshowImagesList.filter(Boolean);
+      const imageUrl = images[0] || serviceFormData.imageUrl;
+
       const payload = {
         name: serviceFormData.name,
         category: serviceFormData.category,
         shortDescription: serviceFormData.shortDescription,
         fullDescription: serviceFormData.fullDescription,
-        imageUrl: serviceFormData.imageUrl,
+        imageUrl,
+        images,
         price: serviceFormData.price,
         isActive: serviceFormData.isActive,
         sortOrder: serviceFormData.sortOrder,
@@ -1557,159 +1580,236 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, onRefreshPubli
                 />
               </div>
 
-              {/* Service Image Upload & Selector Control */}
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
-                  <span>Service Image</span>
-                  <span className="text-[11px] text-slate-400 font-normal">Displayed on catalog cards & modals</span>
-                </label>
-
-                {/* Live Image Preview */}
-                {serviceFormData.imageUrl ? (
-                  <div className="mb-3 relative rounded-xl border border-slate-200 overflow-hidden bg-slate-900 group">
-                    <img
-                      src={serviceFormData.imageUrl}
-                      alt="Service Preview"
-                      className="w-full h-40 object-cover opacity-90 group-hover:opacity-100 transition"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute top-2 right-2 flex items-center gap-2">
-                      <span className="bg-slate-950/80 text-amber-400 text-[10px] font-bold px-2 py-1 rounded backdrop-blur">
-                        {serviceFormData.imageUrl.startsWith('data:') ? 'Uploaded File' : 'Image Linked'}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setServiceFormData({ ...serviceFormData, imageUrl: '' })}
-                        className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2.5 py-1 rounded-lg shadow transition flex items-center gap-1"
-                        title="Remove current image"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Remove</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-
-                {/* Source Selection Tabs */}
-                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 mb-3 text-xs font-semibold">
-                  <button
-                    type="button"
-                    onClick={() => setImageInputTab('upload')}
-                    className={`flex-1 py-1.5 px-2 rounded-md flex items-center justify-center gap-1.5 transition ${
-                      imageInputTab === 'upload'
-                        ? 'bg-white text-amber-800 shadow-sm font-bold'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Upload File</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setImageInputTab('url')}
-                    className={`flex-1 py-1.5 px-2 rounded-md flex items-center justify-center gap-1.5 transition ${
-                      imageInputTab === 'url'
-                        ? 'bg-white text-amber-800 shadow-sm font-bold'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <LinkIcon className="w-3.5 h-3.5" />
-                    <span>Web URL</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setImageInputTab('presets')}
-                    className={`flex-1 py-1.5 px-2 rounded-md flex items-center justify-center gap-1.5 transition ${
-                      imageInputTab === 'presets'
-                        ? 'bg-white text-amber-800 shadow-sm font-bold'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span>Stock Presets</span>
-                  </button>
+              {/* Service Image Upload & Editable Slideshow Control */}
+              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <label className="block font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-amber-600" />
+                    <span>Editable Image Slideshow ({serviceFormData.slideshowImagesList.length} photos)</span>
+                  </label>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    First image (#1 Cover) is card thumbnail
+                  </span>
                 </div>
 
-                {/* TAB 1: FILE UPLOAD & DROPZONE */}
-                {imageInputTab === 'upload' && (
-                  <div
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDropImage}
-                    className={`border-2 border-dashed rounded-xl p-5 text-center transition cursor-pointer relative ${
-                      isDraggingImage
-                        ? 'border-amber-500 bg-amber-50/50'
-                        : 'border-slate-300 hover:border-amber-500 bg-slate-50/50 hover:bg-slate-50'
-                    }`}
-                  >
-                    <input
-                      type="file"
-                      accept="image/png, image/jpeg, image/webp, image/svg+xml"
-                      onChange={handleImageFileChange}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <div className="flex flex-col items-center justify-center space-y-2 pointer-events-none">
-                      <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
-                        <Upload className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-800">
-                          {imageUploading
-                            ? 'Processing & Optimizing Image...'
-                            : 'Click to Choose File or Drag & Drop Image Here'}
-                        </p>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
-                          Supports PNG, JPG, WEBP, SVG (Auto-compressed for fast rendering)
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* TAB 2: EXTERNAL WEB URL */}
-                {imageInputTab === 'url' && (
-                  <div>
-                    <input
-                      type="text"
-                      placeholder="Paste image URL (https://images.unsplash.com/...)"
-                      value={serviceFormData.imageUrl}
-                      onChange={(e) => setServiceFormData({ ...serviceFormData, imageUrl: e.target.value })}
-                      className="w-full p-2.5 border border-slate-300 rounded-lg outline-none text-xs focus:ring-2 focus:ring-amber-500"
-                    />
-                  </div>
-                )}
-
-                {/* TAB 3: INDUSTRIAL STOCK PRESETS */}
-                {imageInputTab === 'presets' && (
-                  <div className="grid grid-cols-3 gap-2">
-                    {INDUSTRIAL_PRESET_IMAGES.map((preset, idx) => (
-                      <button
+                {/* SLIDESHOW THUMBNAIL STRIP & MANAGEMENT */}
+                {serviceFormData.slideshowImagesList.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {serviceFormData.slideshowImagesList.map((imgUrl, idx) => (
+                      <div
                         key={idx}
-                        type="button"
-                        onClick={() => setServiceFormData({ ...serviceFormData, imageUrl: preset.url })}
-                        className={`group relative rounded-lg overflow-hidden border text-left transition ${
-                          serviceFormData.imageUrl === preset.url
-                            ? 'border-amber-500 ring-2 ring-amber-500/50'
-                            : 'border-slate-200 hover:border-amber-400'
-                        }`}
+                        className="relative rounded-lg overflow-hidden border border-slate-300 bg-slate-900 group shadow-xs"
                       >
                         <img
-                          src={preset.url}
-                          alt={preset.title}
-                          className="w-full h-14 object-cover"
+                          src={imgUrl}
+                          alt={`Slide ${idx + 1}`}
+                          className="w-full h-20 object-cover opacity-90 group-hover:opacity-100 transition"
                           referrerPolicy="no-referrer"
                         />
-                        <div className="p-1.5 bg-white text-[10px] font-semibold text-slate-800 truncate">
-                          {preset.title}
+                        <div className="absolute top-1 left-1 bg-slate-950/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs flex items-center gap-1">
+                          <span>#{idx + 1}</span>
+                          {idx === 0 && <span className="text-amber-400">★ Cover</span>}
                         </div>
-                      </button>
+
+                        {/* HOVER ACTION CONTROLS */}
+                        <div className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1.5 p-1">
+                          {idx > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...serviceFormData.slideshowImagesList];
+                                const temp = updated[idx];
+                                updated[idx] = updated[idx - 1];
+                                updated[idx - 1] = temp;
+                                setServiceFormData({ ...serviceFormData, slideshowImagesList: updated, imageUrl: updated[0] });
+                              }}
+                              className="p-1 bg-slate-800 text-white text-[10px] font-bold rounded hover:bg-slate-700"
+                              title="Move Left"
+                            >
+                              ←
+                            </button>
+                          )}
+                          {idx < serviceFormData.slideshowImagesList.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...serviceFormData.slideshowImagesList];
+                                const temp = updated[idx];
+                                updated[idx] = updated[idx + 1];
+                                updated[idx + 1] = temp;
+                                setServiceFormData({ ...serviceFormData, slideshowImagesList: updated, imageUrl: updated[0] });
+                              }}
+                              className="p-1 bg-slate-800 text-white text-[10px] font-bold rounded hover:bg-slate-700"
+                              title="Move Right"
+                            >
+                              →
+                            </button>
+                          )}
+                          {idx !== 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [imgUrl, ...serviceFormData.slideshowImagesList.filter((_, i) => i !== idx)];
+                                setServiceFormData({ ...serviceFormData, slideshowImagesList: updated, imageUrl: imgUrl });
+                              }}
+                              className="p-1 bg-amber-600 text-white text-[10px] font-bold rounded hover:bg-amber-700"
+                              title="Set as Primary Cover Image"
+                            >
+                              ★
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = serviceFormData.slideshowImagesList.filter((_, i) => i !== idx);
+                              setServiceFormData({ ...serviceFormData, slideshowImagesList: updated, imageUrl: updated[0] || '' });
+                            }}
+                            className="p-1 bg-red-600 text-white rounded hover:bg-red-700"
+                            title="Remove from Slideshow"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     ))}
                   </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic">No slideshow images added yet. Add photos below!</p>
                 )}
 
-                {imageUploadError && (
-                  <p className="text-[11px] font-semibold text-red-600 mt-1.5">{imageUploadError}</p>
-                )}
+                {/* ADD NEW IMAGE INPUT TABS */}
+                <div className="pt-3 border-t border-slate-200">
+                  <div className="text-[11px] font-semibold text-slate-700 mb-1.5">
+                    Add Photos to Slideshow
+                  </div>
+                  <div className="flex rounded-lg bg-slate-200/80 p-0.5 text-xs font-medium mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setImageInputTab('upload')}
+                      className={`flex-1 py-1 px-2 rounded-md flex items-center justify-center gap-1 transition ${
+                        imageInputTab === 'upload'
+                          ? 'bg-white text-amber-800 shadow-sm font-bold'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload File</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageInputTab('url')}
+                      className={`flex-1 py-1 px-2 rounded-md flex items-center justify-center gap-1 transition ${
+                        imageInputTab === 'url'
+                          ? 'bg-white text-amber-800 shadow-sm font-bold'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <LinkIcon className="w-3.5 h-3.5" />
+                      <span>Web URL</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageInputTab('presets')}
+                      className={`flex-1 py-1 px-2 rounded-md flex items-center justify-center gap-1 transition ${
+                        imageInputTab === 'presets'
+                          ? 'bg-white text-amber-800 shadow-sm font-bold'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      <span>Stock Presets</span>
+                    </button>
+                  </div>
+
+                  {/* TAB 1: FILE UPLOAD & DROPZONE */}
+                  {imageInputTab === 'upload' && (
+                    <div
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDropImage}
+                      className={`border-2 border-dashed rounded-xl p-4 text-center transition cursor-pointer relative ${
+                        isDraggingImage
+                          ? 'border-amber-500 bg-amber-50/50'
+                          : 'border-slate-300 hover:border-amber-500 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                        onChange={handleImageFileChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <div className="flex flex-col items-center justify-center space-y-1 pointer-events-none">
+                        <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
+                          <Upload className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">
+                            {imageUploading
+                              ? 'Processing & Optimizing Image...'
+                              : 'Click or Drag Image File to Add to Slideshow'}
+                          </p>
+                          <p className="text-[10px] text-slate-500">
+                            Supports PNG, JPG, WEBP, SVG (Auto-added to slideshow list)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 2: EXTERNAL WEB URL */}
+                  {imageInputTab === 'url' && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Paste image URL (https://images.unsplash.com/...)"
+                        value={serviceFormData.imageUrl}
+                        onChange={(e) => setServiceFormData({ ...serviceFormData, imageUrl: e.target.value })}
+                        className="flex-1 p-2 border border-slate-300 rounded-lg outline-none text-xs focus:ring-2 focus:ring-amber-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (serviceFormData.imageUrl) {
+                            addImageToSlideshow(serviceFormData.imageUrl);
+                          }
+                        }}
+                        className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-3 py-2 rounded-lg transition shrink-0"
+                      >
+                        + Add to Slideshow
+                      </button>
+                    </div>
+                  )}
+
+                  {/* TAB 3: INDUSTRIAL STOCK PRESETS */}
+                  {imageInputTab === 'presets' && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {INDUSTRIAL_PRESET_IMAGES.map((preset, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => addImageToSlideshow(preset.url)}
+                          className="group relative rounded-lg overflow-hidden border border-slate-200 hover:border-amber-500 text-left transition"
+                        >
+                          <img
+                            src={preset.url}
+                            alt={preset.title}
+                            className="w-full h-12 object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="p-1 bg-white text-[9px] font-semibold text-slate-800 truncate flex items-center justify-between">
+                            <span>{preset.title}</span>
+                            <span className="text-amber-600 font-bold">+Add</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {imageUploadError && (
+                    <p className="text-[11px] font-semibold text-red-600 mt-1.5">{imageUploadError}</p>
+                  )}
+                </div>
               </div>
 
               <div>

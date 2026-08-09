@@ -15,6 +15,7 @@ export interface Service {
   shortDescription: string;
   fullDescription: string;
   imageUrl: string;
+  images?: string[]; // Array of slideshow image URLs
   price: string; // e.g. "Price on Request" or "₹15,000 / unit"
   isActive: boolean;
   sortOrder: number;
@@ -52,6 +53,7 @@ export interface SiteSettings {
   employeeCount: string;
   businessType: string;
   gstin: string;
+  heroImages?: string[]; // Array of hero section slideshow images
 }
 
 export interface GalleryItem {
