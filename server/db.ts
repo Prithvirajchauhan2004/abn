@@ -17,9 +17,7 @@ interface DBData {
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
-const DEFAULT_DATABASE_URL =
-  process.env.DATABASE_URL ||
-  'postgresql://neondb_owner:npg_1fH9MVYBJrCm@ep-mute-rain-aznc14bh-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
+const DEFAULT_DATABASE_URL = process.env.DATABASE_URL || '';
 
 // Default initial database content
 const getDefaultData = (): DBData => {
@@ -348,11 +346,14 @@ export class Database {
           client.release();
         }
       } catch (err) {
-        console.error('Failed to initialize Neon PostgreSQL database, falling back to local storage:', err);
+        console.error('Failed to initialize PostgreSQL database, falling back to local storage:', err);
         this.isPgConnected = false;
+        this.pool = null;
         this.initFallbackFileDb();
       }
     } else {
+      this.isPgConnected = false;
+      this.pool = null;
       this.initFallbackFileDb();
     }
   }
@@ -523,7 +524,7 @@ export class Database {
 
   // --- ADMIN & AUTH ---
   async getAdminUser(): Promise<AdminUser & { passwordHash: string }> {
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         const res = await this.pool.query('SELECT id, email, username, name, password_hash FROM admin_users LIMIT 1');
         if (res.rows.length > 0) {
@@ -537,7 +538,9 @@ export class Database {
           };
         }
       } catch (e) {
-        console.error('Error fetching admin user from PG:', e);
+        console.error('Error fetching admin user from PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
     if (!this.localData) this.initFallbackFileDb();
@@ -545,12 +548,14 @@ export class Database {
   }
 
   async updateAdminPassword(newPasswordHash: string): Promise<void> {
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         await this.pool.query('UPDATE admin_users SET password_hash = $1', [newPasswordHash]);
         return;
       } catch (e) {
-        console.error('Error updating admin password in PG:', e);
+        console.error('Error updating admin password in PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
     if (!this.localData) this.initFallbackFileDb();
@@ -560,7 +565,7 @@ export class Database {
 
   // --- SITE SETTINGS ---
   async getSettings(): Promise<SiteSettings> {
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         const res = await this.pool.query('SELECT * FROM site_settings LIMIT 1');
         if (res.rows.length > 0) {
@@ -581,7 +586,9 @@ export class Database {
           };
         }
       } catch (e) {
-        console.error('Error fetching settings from PG:', e);
+        console.error('Error fetching settings from PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
     if (!this.localData) this.initFallbackFileDb();
@@ -592,7 +599,7 @@ export class Database {
     const current = await this.getSettings();
     const updated = { ...current, ...newSettings };
 
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         await this.pool.query(
           `UPDATE site_settings SET
@@ -608,7 +615,9 @@ export class Database {
         );
         return updated;
       } catch (e) {
-        console.error('Error updating settings in PG:', e);
+        console.error('Error updating settings in PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -620,7 +629,7 @@ export class Database {
 
   // --- SERVICES CRUD ---
   async getAllServices(includeInactive = false): Promise<Service[]> {
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         const query = includeInactive
           ? 'SELECT * FROM services ORDER BY sort_order ASC'
@@ -641,7 +650,9 @@ export class Database {
           updatedAt: new Date(r.updated_at).toISOString(),
         }));
       } catch (e) {
-        console.error('Error fetching services from PG:', e);
+        console.error('Error fetching services from PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -655,7 +666,7 @@ export class Database {
   }
 
   async getServiceById(id: string): Promise<Service | undefined> {
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         const res = await this.pool.query('SELECT * FROM services WHERE id = $1', [id]);
         if (res.rows.length > 0) {
@@ -676,7 +687,9 @@ export class Database {
           };
         }
       } catch (e) {
-        console.error('Error fetching service by id from PG:', e);
+        console.error('Error fetching service by id from PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -692,7 +705,7 @@ export class Database {
       updatedAt: new Date().toISOString(),
     };
 
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         await this.pool.query(
           `INSERT INTO services (id, name, category, short_description, full_description, image_url, price, is_active, sort_order, use_cases, created_at, updated_at)
@@ -705,7 +718,9 @@ export class Database {
         );
         return newService;
       } catch (e) {
-        console.error('Error creating service in PG:', e);
+        console.error('Error creating service in PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -725,7 +740,7 @@ export class Database {
       updatedAt: new Date().toISOString(),
     };
 
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         await this.pool.query(
           `UPDATE services SET
@@ -741,7 +756,9 @@ export class Database {
         );
         return updated;
       } catch (e) {
-        console.error('Error updating service in PG:', e);
+        console.error('Error updating service in PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -755,12 +772,14 @@ export class Database {
   }
 
   async deleteService(id: string): Promise<boolean> {
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         const res = await this.pool.query('DELETE FROM services WHERE id = $1', [id]);
         return (res.rowCount ?? 0) > 0;
       } catch (e) {
-        console.error('Error deleting service from PG:', e);
+        console.error('Error deleting service from PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -774,7 +793,7 @@ export class Database {
 
   // --- LEADS CRUD ---
   async getAllLeads(): Promise<Lead[]> {
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         const res = await this.pool.query('SELECT * FROM leads ORDER BY created_at DESC');
         return res.rows.map((r) => ({
@@ -791,7 +810,9 @@ export class Database {
           createdAt: new Date(r.created_at).toISOString(),
         }));
       } catch (e) {
-        console.error('Error fetching leads from PG:', e);
+        console.error('Error fetching leads from PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -800,7 +821,7 @@ export class Database {
   }
 
   async getLeadById(id: string): Promise<Lead | undefined> {
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         const res = await this.pool.query('SELECT * FROM leads WHERE id = $1', [id]);
         if (res.rows.length > 0) {
@@ -820,7 +841,9 @@ export class Database {
           };
         }
       } catch (e) {
-        console.error('Error fetching lead by id from PG:', e);
+        console.error('Error fetching lead by id from PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -836,7 +859,7 @@ export class Database {
       createdAt: new Date().toISOString(),
     };
 
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         await this.pool.query(
           `INSERT INTO leads (id, name, phone, email, company_name, service_interested, message, city, status, created_at)
@@ -848,7 +871,9 @@ export class Database {
         );
         return newLead;
       } catch (e) {
-        console.error('Error creating lead in PG:', e);
+        console.error('Error creating lead in PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -867,7 +892,7 @@ export class Database {
       ...updates,
     };
 
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         await this.pool.query(
           `UPDATE leads SET
@@ -881,7 +906,9 @@ export class Database {
         );
         return updated;
       } catch (e) {
-        console.error('Error updating lead in PG:', e);
+        console.error('Error updating lead in PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -895,12 +922,14 @@ export class Database {
   }
 
   async deleteLead(id: string): Promise<boolean> {
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         const res = await this.pool.query('DELETE FROM leads WHERE id = $1', [id]);
         return (res.rowCount ?? 0) > 0;
       } catch (e) {
-        console.error('Error deleting lead from PG:', e);
+        console.error('Error deleting lead from PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -914,7 +943,7 @@ export class Database {
 
   // --- GALLERY CRUD ---
   async getGalleryItems(): Promise<GalleryItem[]> {
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         const res = await this.pool.query('SELECT * FROM gallery_items');
         return res.rows.map((r) => ({
@@ -925,7 +954,9 @@ export class Database {
           description: r.description || '',
         }));
       } catch (e) {
-        console.error('Error fetching gallery items from PG:', e);
+        console.error('Error fetching gallery items from PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -934,7 +965,7 @@ export class Database {
   }
 
   async getGalleryItemById(id: string): Promise<GalleryItem | undefined> {
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         const res = await this.pool.query('SELECT * FROM gallery_items WHERE id = $1', [id]);
         if (res.rows.length > 0) {
@@ -948,7 +979,9 @@ export class Database {
           };
         }
       } catch (e) {
-        console.error('Error fetching gallery item by id from PG:', e);
+        console.error('Error fetching gallery item by id from PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -962,7 +995,7 @@ export class Database {
       id: `gal-${Date.now()}`,
     };
 
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         await this.pool.query(
           `INSERT INTO gallery_items (id, title, category, image_url, description)
@@ -971,7 +1004,9 @@ export class Database {
         );
         return newItem;
       } catch (e) {
-        console.error('Error creating gallery item in PG:', e);
+        console.error('Error creating gallery item in PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -990,7 +1025,7 @@ export class Database {
       ...updates,
     };
 
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         await this.pool.query(
           `UPDATE gallery_items SET
@@ -1000,7 +1035,9 @@ export class Database {
         );
         return updated;
       } catch (e) {
-        console.error('Error updating gallery item in PG:', e);
+        console.error('Error updating gallery item in PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 
@@ -1014,12 +1051,14 @@ export class Database {
   }
 
   async deleteGalleryItem(id: string): Promise<boolean> {
-    if (this.pool) {
+    if (this.isPgConnected && this.pool) {
       try {
         const res = await this.pool.query('DELETE FROM gallery_items WHERE id = $1', [id]);
         return (res.rowCount ?? 0) > 0;
       } catch (e) {
-        console.error('Error deleting gallery item from PG:', e);
+        console.error('Error deleting gallery item from PG, switching to local DB:', e);
+        this.isPgConnected = false;
+        this.pool = null;
       }
     }
 

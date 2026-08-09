@@ -18,6 +18,7 @@ import {
   Camera,
 } from 'lucide-react';
 import { Service, SiteSettings, GalleryItem } from '../types';
+import { ServiceDetailModal } from '../components/ServiceDetailModal';
 
 interface HomePageProps {
   settings: SiteSettings;
@@ -464,129 +465,13 @@ export const HomePage: React.FC<HomePageProps> = ({
 
       {/* SERVICE DETAILS FULL DESCRIPTION MODAL */}
       {activeServiceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in overflow-y-auto">
-          <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 my-8">
-            <div className="relative aspect-video max-h-72 bg-slate-900">
-              <img
-                src={activeServiceModal.imageUrl}
-                alt={activeServiceModal.name}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-
-              <button
-                onClick={() => setActiveServiceModal(null)}
-                className="absolute top-4 right-4 p-2 bg-slate-900/80 hover:bg-slate-900 text-white rounded-full transition shadow"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="absolute bottom-4 left-6 right-6 text-white space-y-1">
-                <span className="bg-rose-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">
-                  {activeServiceModal.category}
-                </span>
-                <h2 className="text-2xl font-bold font-serif">{activeServiceModal.name}</h2>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
-              {/* Short Summary */}
-              <div className="bg-rose-50/60 border border-rose-100 p-3.5 rounded-xl text-xs text-rose-950 font-medium">
-                {activeServiceModal.shortDescription}
-              </div>
-
-              {/* Full Description with whitespace-pre-wrap to preserve admin formatting */}
-              <div>
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Full Service Description
-                </h4>
-                <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-xl text-sm text-slate-800 leading-relaxed whitespace-pre-wrap font-sans">
-                  {activeServiceModal.fullDescription}
-                </div>
-              </div>
-
-              {/* Use Cases */}
-              {activeServiceModal.useCases && activeServiceModal.useCases.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    Key Industrial Applications
-                  </h4>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
-                    {activeServiceModal.useCases.map((uc, i) => (
-                      <li
-                        key={i}
-                        className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200"
-                      >
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>{uc}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Price */}
-              <div className="bg-slate-100 p-3.5 rounded-xl flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-600">Pricing & Commercials</span>
-                <span className="text-sm font-bold text-slate-900">{activeServiceModal.price}</span>
-              </div>
-            </div>
-
-            {/* Modal Footer with "Get a Callback" and "Call Now" */}
-            <div className="p-5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {/* GET A CALLBACK BUTTON */}
-                <button
-                  onClick={() => {
-                    const name = activeServiceModal.name;
-                    setActiveServiceModal(null);
-                    onOpenQuote(`Callback Request: ${name}`);
-                  }}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-sm"
-                >
-                  <PhoneCall className="w-3.5 h-3.5" />
-                  <span>Get a Callback</span>
-                </button>
-
-                {/* CALL NOW BUTTON */}
-                <a
-                  href={`tel:${settings.phone.replace(/[^0-9+]/g, '')}`}
-                  className="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-sm"
-                >
-                  <Phone className="w-3.5 h-3.5 text-rose-400" />
-                  <span>Call Now ({settings.phone})</span>
-                </a>
-
-                {/* WHATSAPP CHAT */}
-                <a
-                  href={`https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                    `Hello ABN Thermocare, I am reading about "${activeServiceModal.name}". Please call me back.`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 font-semibold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5"
-                >
-                  <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>WhatsApp</span>
-                </a>
-              </div>
-
-              {/* REQUEST FAST QUOTE */}
-              <button
-                onClick={() => {
-                  const name = activeServiceModal.name;
-                  setActiveServiceModal(null);
-                  onOpenQuote(name);
-                }}
-                className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition shadow flex items-center gap-1.5"
-              >
-                <span>Request Fast Quote</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <ServiceDetailModal
+          service={activeServiceModal}
+          settings={settings}
+          galleryItems={gallery}
+          onClose={() => setActiveServiceModal(null)}
+          onOpenQuote={onOpenQuote}
+        />
       )}
 
       {/* GALLERY ITEM FULL DESCRIPTION MODAL */}

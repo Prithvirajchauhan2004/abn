@@ -10,16 +10,19 @@ import {
   PhoneCall,
   MessageCircle,
 } from 'lucide-react';
-import { Service, SiteSettings } from '../types';
+import { Service, SiteSettings, GalleryItem } from '../types';
+import { ServiceDetailModal } from '../components/ServiceDetailModal';
 
 interface ServicesPageProps {
   services: Service[];
+  gallery?: GalleryItem[];
   settings?: SiteSettings;
   onOpenQuote: (serviceName?: string) => void;
 }
 
 export const ServicesPage: React.FC<ServicesPageProps> = ({
   services,
+  gallery = [],
   settings,
   onOpenQuote,
 }) => {
@@ -220,122 +223,26 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({
 
       {/* SERVICE DETAILS MODAL */}
       {activeModalService && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in overflow-y-auto">
-          <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 my-8">
-            <div className="relative aspect-video max-h-72 bg-slate-900">
-              <img
-                src={activeModalService.imageUrl}
-                alt={activeModalService.name}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-
-              <button
-                onClick={() => setActiveModalService(null)}
-                className="absolute top-4 right-4 p-2 bg-slate-900/80 hover:bg-slate-900 text-white rounded-full transition shadow"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="absolute bottom-4 left-6 right-6 text-white space-y-1">
-                <span className="bg-rose-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">
-                  {activeModalService.category}
-                </span>
-                <h2 className="text-2xl font-bold font-serif">{activeModalService.name}</h2>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
-              <div className="bg-rose-50/60 border border-rose-100 p-3.5 rounded-xl text-xs text-rose-950 font-medium">
-                {activeModalService.shortDescription}
-              </div>
-
-              {/* Full Description with whitespace-pre-wrap */}
-              <div>
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Full Service Overview
-                </h4>
-                <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-xl text-sm text-slate-800 leading-relaxed whitespace-pre-wrap font-sans">
-                  {activeModalService.fullDescription}
-                </div>
-              </div>
-
-              {activeModalService.useCases && activeModalService.useCases.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    Key Industrial Applications & Use Cases
-                  </h4>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
-                    {activeModalService.useCases.map((uc, i) => (
-                      <li key={i} className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>{uc}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <div className="bg-slate-100 p-3.5 rounded-xl flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-600">Pricing Structure</span>
-                <span className="text-sm font-bold text-slate-900">{activeModalService.price}</span>
-              </div>
-            </div>
-
-            {/* Modal Actions */}
-            <div className="p-5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Get a Callback */}
-                <button
-                  onClick={() => {
-                    const name = activeModalService.name;
-                    setActiveModalService(null);
-                    onOpenQuote(`Callback Request: ${name}`);
-                  }}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-sm"
-                >
-                  <PhoneCall className="w-3.5 h-3.5" />
-                  <span>Get a Callback</span>
-                </button>
-
-                {/* Call Now */}
-                <a
-                  href={`tel:${phoneNum.replace(/[^0-9+]/g, '')}`}
-                  className="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-sm"
-                >
-                  <Phone className="w-3.5 h-3.5 text-rose-400" />
-                  <span>Call Now ({phoneNum})</span>
-                </a>
-
-                {/* WhatsApp */}
-                <a
-                  href={`https://wa.me/${whatsappNum.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                    `Hello ABN Thermocare, I am reading about "${activeModalService.name}". Please call me back.`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 font-semibold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5"
-                >
-                  <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>WhatsApp</span>
-                </a>
-              </div>
-
-              <button
-                onClick={() => {
-                  const name = activeModalService.name;
-                  setActiveModalService(null);
-                  onOpenQuote(name);
-                }}
-                className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition shadow flex items-center gap-2"
-              >
-                <span>Request Quotation</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <ServiceDetailModal
+          service={activeModalService}
+          settings={settings || {
+            companyName: 'ABN Thermocare System',
+            tagline: 'Industrial Piping, Thermal Insulation & Heating Engineering',
+            location: 'Greater Noida, India',
+            address: 'Plot No. 45, Ecotech-3, Industrial Area, Greater Noida, UP 201306',
+            owner: 'Satendra Yadav',
+            phone: '+91 8043801550',
+            whatsapp: '+918043801550',
+            email: 'info@abnthermocare.com',
+            experienceYears: 15,
+            employeeCount: '25-50 Engineers & Technicians',
+            businessType: 'Manufacturer & Service Provider',
+            gstin: '09AABCU9601M1ZD',
+          }}
+          galleryItems={gallery}
+          onClose={() => setActiveModalService(null)}
+          onOpenQuote={onOpenQuote}
+        />
       )}
     </div>
   );

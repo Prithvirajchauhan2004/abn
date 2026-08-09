@@ -128,7 +128,7 @@ export default function App() {
         )}
 
         {currentPage === 'services' && (
-          <ServicesPage services={services} settings={settings} onOpenQuote={handleOpenQuoteModal} />
+          <ServicesPage services={services} gallery={gallery} settings={settings} onOpenQuote={handleOpenQuoteModal} />
         )}
 
         {currentPage === 'gallery' && (
